@@ -13,11 +13,13 @@ SUCCESS_COLOR = "#66BB6A"
 DANGER_COLOR = "#EF5350"
 WARNING_COLOR = "#FFA726"
 
+# الجزء الجديد (المصحح)
 SHADOW_3D = ft.BoxShadow(
     spread_radius=1,
     blur_radius=15,
-    color=ft.colors.with_opacity(0.15, "black"),
+    color="#26000000", # تم استبدال الدالة بكود لون ثابت ومضمون
     offset=ft.Offset(4, 4)
+)
 )
 
 # ==========================================
