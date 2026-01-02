@@ -1,0 +1,38 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4  # تم التحديث إلى v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v5 # تم التحديث إلى v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        channel: stable
+
+    - name: Build APK with Flet
+      run: |
+        flet build apk --verbose
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4 # 👈 هذا هو الإصلاح المهم (v4)
+      with:
+        name: SmartShop-APK
+        path: build/apk/app-release.apk
