@@ -13,13 +13,12 @@ SUCCESS_COLOR = "#66BB6A"
 DANGER_COLOR = "#EF5350"
 WARNING_COLOR = "#FFA726"
 
-# الجزء الجديد (المصحح)
+# إصلاح مشكلة الظل والأقواس (تم استخدام كود هيكسا للشفافية)
 SHADOW_3D = ft.BoxShadow(
     spread_radius=1,
     blur_radius=15,
-    color="#26000000", # تم استبدال الدالة بكود لون ثابت ومضمون
+    color="#26000000",
     offset=ft.Offset(4, 4)
-)
 )
 
 # ==========================================
@@ -37,7 +36,6 @@ def init_db():
     c.execute('''CREATE TABLE IF NOT EXISTS users 
                  (username TEXT PRIMARY KEY, password TEXT, role TEXT)''')
     
-    # بيانات أولية
     c.execute("INSERT OR IGNORE INTO users VALUES ('admin', '1234', 'admin')")
     c.execute("INSERT OR IGNORE INTO customers (name, phone, debt) VALUES ('عميل عام', '0000', 0)")
     conn.commit()
@@ -58,7 +56,7 @@ def run_query(query, args=(), fetch=False, fetch_all=False):
 # 📱 3. التطبيق الرئيسي
 # ==========================================
 def main(page: ft.Page):
-    page.title = "Smart Shop V8 - Dashboard"
+    page.title = "Smart Shop V8"
     page.theme_mode = ft.ThemeMode.LIGHT
     page.rtl = True
     page.bgcolor = BG_COLOR
@@ -137,10 +135,10 @@ def main(page: ft.Page):
             )
         )
 
-    # --- 2. لوحة التحكم الرئيسية (التطبيق) ---
+    # --- 2. لوحة التحكم الرئيسية ---
     def app_dashboard():
         
-        # === أ. تبويب الإحصائيات (Dashboard) ===
+        # === أ. تبويب الإحصائيات ===
         stat_sales = ft.Text("0.000", size=20, weight="bold", color="white")
         stat_profit = ft.Text("0.000", size=20, weight="bold", color="white")
         stat_debt = ft.Text("0.000", size=20, weight="bold", color="white")
@@ -159,7 +157,7 @@ def main(page: ft.Page):
             debt = res_debt[0] if res_debt[0] else 0.0
             stat_debt.value = f"{debt:.3f} د.ت"
 
-            # 3. نواقص المخزون (أقل من 5 قطع)
+            # 3. نواقص المخزون
             low_stock_list.controls.clear()
             low_items = run_query("SELECT name, stock FROM products WHERE stock < 5", fetch_all=True)
             if low_items:
@@ -189,13 +187,13 @@ def main(page: ft.Page):
             ft.ElevatedButton("تحديث البيانات 🔄", on_click=refresh_stats, bgcolor=ACCENT_COLOR, color="white")
         ], scroll="auto")
 
-        # ربط قيم البطاقات بالمتغيرات لتحديثها
+        # ربط التحديث
         dash_content.controls[1].controls[0].content.controls[2] = stat_sales
         dash_content.controls[1].controls[1].content.controls[2] = stat_profit
         dash_content.controls[1].controls[2].content.controls[2] = stat_debt
 
 
-        # === ب. تبويب نقطة البيع (POS) ===
+        # === ب. تبويب نقطة البيع ===
         pos_bar_ref = ft.Ref[ft.TextField]()
         pos_qty_ref = ft.Ref[ft.TextField]()
         cart_list = ft.ListView(spacing=5, height=200)
@@ -220,7 +218,6 @@ def main(page: ft.Page):
             code = pos_bar_ref.current.value
             p = run_query("SELECT * FROM products WHERE barcode=?", (code,), fetch=True)
             if p:
-                # التحقق من المخزون
                 if p[4] <= 0:
                     page.snack_bar = ft.SnackBar(ft.Text("❌ نفد المخزون!"), bgcolor="red")
                     page.snack_bar.open = True
@@ -244,21 +241,18 @@ def main(page: ft.Page):
             prof = tot - sum([i['cost']*i['qty'] for i in state['cart']])
             cust_id = int(cust_dd.value) if cust_dd.value else 1
             
-            # تسجيل البيع
             run_query("INSERT INTO sales (date, total, profit, type, customer_id) VALUES (?,?,?,?,?)",
                       (datetime.now().strftime("%Y-%m-%d"), tot, prof, pay_type, cust_id))
             
-            # خصم المخزون
             for item in state['cart']:
                 run_query("UPDATE products SET stock = stock - ? WHERE barcode=?", (item['qty'], item['barcode']))
 
-            # زيادة الدين إذا كريدي
             if pay_type == "كريدي":
                 run_query("UPDATE customers SET debt = debt + ? WHERE id=?", (tot, cust_id))
 
             state['cart'] = []
             update_cart_ui()
-            refresh_stats() # تحديث الإحصائيات فوراً
+            refresh_stats()
             page.snack_bar = ft.SnackBar(ft.Text(f"✅ تم البيع ({pay_type})"), bgcolor="green")
             page.snack_bar.open = True
             page.update()
@@ -348,10 +342,10 @@ def main(page: ft.Page):
         refresh_stats()
 
         page.add(
-            ft.Row([ft.Text("نظام V8", size=20, weight="bold"), ft.IconButton(ft.icons.LOGOUT, icon_color=DANGER_COLOR, on_click=lambda e: page.window_close())], alignment="spaceBetween"),
+            ft.Row([ft.Text("نظام V8.1", size=20, weight="bold"), ft.IconButton(ft.icons.LOGOUT, icon_color=DANGER_COLOR, on_click=lambda e: page.window_close())], alignment="spaceBetween"),
             create_card(tabs, height=750)
         )
 
     login_view()
 
-ft.app(target=main, view=ft.AppView.WEB_BROWSER, port=5000)
+ft.app(target=main)
